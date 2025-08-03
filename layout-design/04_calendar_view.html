@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タスク管理アプリ - カレンダー表示</title>
+    <link rel="stylesheet" href="css/common.css">
+    <style>
+        .calendar-container {
+            padding: 24px;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .calendar-title {
+            font-size: 24px;
+            font-weight: 500;
+        }
+        
+        .view-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .view-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        .view-btn.active {
+            background: #1976d2;
+            color: white;
+            border-color: #1976d2;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        
+        .calendar-header-cell {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: center;
+            font-weight: 500;
+            color: #666;
+        }
+        
+        .calendar-cell {
+            background: white;
+            min-height: 120px;
+            padding: 8px;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        
+        .calendar-cell:hover {
+            background: #f9f9f9;
+        }
+        
+        .calendar-cell.other-month {
+            background: #fafafa;
+            color: #ccc;
+        }
+        
+        .calendar-cell.today {
+            background: #e3f2fd;
+        }
+        
+        .calendar-cell.selected {
+            background: #bbdefb;
+        }
+        
+        .calendar-date {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        
+        .calendar-task {
+            background: #1976d2;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-bottom: 2px;
+            cursor: pointer;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .calendar-task.deadline {
+            background: #f44336;
+        }
+        
+        .calendar-task.start {
+            background: #4caf50;
+        }
+        
+        .calendar-task.milestone {
+            background: #ff9800;
+        }
+        
+        .calendar-legend {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 16px;
+            font-size: 14px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+        
+        .selected-date-tasks {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        
+        .selected-date-title {
+            font-weight: 500;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .date-task-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .date-task-item:last-child {
+            border-bottom: none;
+        }
+        
+        .date-task-info {
+            flex: 1;
+        }
+        
+        .date-task-title {
+            font-weight: 500;
+            margin-bottom: 2px;
+        }
+        
+        .date-task-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .date-task-type {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 10px;
+            color: white;
+            margin-right: 8px;
+        }
+        
+        .nav-arrow {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .nav-arrow:hover {
+            background: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ヘッダー -->
+        <header class="header">
+            <h1>タスク管理アプリ</h1>
+            <div class="user-menu">ユーザー設定</div>
+        </header>
+        
+        <!-- ナビゲーション -->
+        <nav class="navigation">
+            <ul class="nav-tabs">
+                <li class="nav-tab">一覧</li>
+                <li class="nav-tab">マトリックス</li>
+                <li class="nav-tab active">カレンダー</li>
+            </ul>
+        </nav>
+        
+        <!-- カレンダー表示 -->
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <div class="calendar-nav">
+                    <button class="nav-arrow">‹</button>
+                    <div class="calendar-title">2024年12月</div>
+                    <button class="nav-arrow">›</button>
+                    <button class="btn btn-secondary">今日</button>
+                </div>
+                <div class="view-controls">
+                    <button class="view-btn">日表示</button>
+                    <button class="view-btn">週表示</button>
+                    <button class="view-btn active">月表示</button>
+                    <button class="btn btn-primary">+ 新規タスク</button>
+                </div>
+            </div>
+            
+            <div class="calendar-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #f44336;"></div>
+                    <span>期限</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4caf50;"></div>
+                    <span>開始予定</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff9800;"></div>
+                    <span>マイルストーン</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #1976d2;"></div>
+                    <span>その他</span>
+                </div>
+            </div>
+            
+            <div class="calendar-grid">
+                <!-- 曜日ヘッダー -->
+                <div class="calendar-header-cell">日</div>
+                <div class="calendar-header-cell">月</div>
+                <div class="calendar-header-cell">火</div>
+                <div class="calendar-header-cell">水</div>
+                <div class="calendar-header-cell">木</div>
+                <div class="calendar-header-cell">金</div>
+                <div class="calendar-header-cell">土</div>
+                
+                <!-- 第1週 -->
+                <div class="calendar-cell">
+                    <div class="calendar-date">1</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">2</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">3</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">4</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">5</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">6</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">7</div>
+                </div>
+                
+                <!-- 第2週 -->
+                <div class="calendar-cell">
+                    <div class="calendar-date">8</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">9</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">10</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">11</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">12</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">13</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">14</div>
+                </div>
+                
+                <!-- 第3週 -->
+                <div class="calendar-cell">
+                    <div class="calendar-date">15</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">16</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">17</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">18</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">19</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">20</div>
+                    <div class="calendar-task start">企画書開始</div>
+                </div>
+                <div class="calendar-cell today">
+                    <div class="calendar-date">21</div>
+                    <div class="calendar-task milestone">要件整理完了</div>
+                </div>
+                
+                <!-- 第4週 -->
+                <div class="calendar-cell">
+                    <div class="calendar-date">22</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">23</div>
+                    <div class="calendar-task milestone">初稿作成</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">24</div>
+                    <div class="calendar-task milestone">レビュー</div>
+                </div>
+                <div class="calendar-cell selected">
+                    <div class="calendar-date">25</div>
+                    <div class="calendar-task deadline">企画書期限</div>
+                    <div class="calendar-task start">会議資料開始</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">26</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">27</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">28</div>
+                </div>
+                
+                <!-- 第5週 -->
+                <div class="calendar-cell">
+                    <div class="calendar-date">29</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">30</div>
+                    <div class="calendar-task deadline">会議資料期限</div>
+                </div>
+                <div class="calendar-cell">
+                    <div class="calendar-date">31</div>
+                </div>
+                <div class="calendar-cell other-month">
+                    <div class="calendar-date">1</div>
+                </div>
+                <div class="calendar-cell other-month">
+                    <div class="calendar-date">2</div>
+                </div>
+                <div class="calendar-cell other-month">
+                    <div class="calendar-date">3</div>
+                </div>
+                <div class="calendar-cell other-month">
+                    <div class="calendar-date">4</div>
+                </div>
+            </div>
+            
+            <!-- 選択日のタスク -->
+            <div class="selected-date-tasks">
+                <div class="selected-date-title">2024年12月25日のタスク</div>
+                
+                <div class="date-task-item">
+                    <div class="date-task-info">
+                        <div class="date-task-title">
+                            <span class="date-task-type deadline">期限</span>
+                            プロジェクト企画書作成
+                        </div>
+                        <div class="date-task-meta">
+                            <span class="badge priority-high">高</span>
+                            <span class="badge urgency-high">⚡高</span>
+                            進捗: 60%
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary">詳細</button>
+                </div>
+                
+                <div class="date-task-item">
+                    <div class="date-task-info">
+                        <div class="date-task-title">
+                            <span class="date-task-type start">開始</span>
+                            会議資料準備
+                        </div>
+                        <div class="date-task-meta">
+                            <span class="badge priority-medium">中</span>
+                            <span class="badge urgency-medium">⏰中</span>
+                            進捗: 0%
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary">詳細</button>
+                </div>
+                
+                <div style="text-align: center; margin-top: 16px; color: #666;">
+                    <small>日付をクリックして他の日のタスクを確認</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // カレンダーの基本的なインタラクション
+        document.querySelectorAll('.calendar-cell').forEach(cell => {
+            cell.addEventListener('click', function() {
+                // 既存の選択を解除
+                document.querySelectorAll('.calendar-cell.selected').forEach(c => {
+                    c.classList.remove('selected');
+                });
+                
+                // 新しい選択を追加
+                this.classList.add('selected');
+                
+                // 選択日のタスク表示を更新（実際の実装では日付に応じてタスクを取得）
+                const date = this.querySelector('.calendar-date').textContent;
+                document.querySelector('.selected-date-title').textContent = 
+                    `2024年12月${date}日のタスク`;
+            });
+        });
+        
+        // 月ナビゲーション
+        document.querySelectorAll('.nav-arrow').forEach(arrow => {
+            arrow.addEventListener('click', function() {
+                // 実際の実装では月の切り替え処理
+                console.log('月を切り替え');
+            });
+        });
+        
+        // 表示切り替え
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
