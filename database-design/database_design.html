@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タスク管理アプリ - データベース設計書</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #1976d2;
+            border-bottom: 3px solid #1976d2;
+            padding-bottom: 10px;
+        }
+        
+        h2 {
+            color: #333;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+        
+        .table-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .table-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .table-header {
+            background: #1976d2;
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .table-content {
+            padding: 15px;
+        }
+        
+        .field-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .field-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .field-item:last-child {
+            border-bottom: none;
+        }
+        
+        .field-name {
+            font-weight: 500;
+        }
+        
+        .field-type {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .primary-key {
+            color: #f44336;
+            font-weight: bold;
+        }
+        
+        .foreign-key {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        
+        .er-diagram {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        
+        .table-detail {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .detail-header {
+            background: #f8f9fa;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 18px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .detail-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+            font-weight: 600;
+        }
+        
+        .detail-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .detail-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .constraint {
+            font-size: 12px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: white;
+            margin-left: 5px;
+        }
+        
+        .pk { background: #f44336; }
+        .fk { background: #ff9800; }
+        .nn { background: #4caf50; }
+        .uq { background: #9c27b0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>タスク管理アプリ データベース設計書</h1>
+        
+        <h2>1. データベース概要</h2>
+        <p>PostgreSQLを使用したタスク管理システムのデータベース設計。メインテーブル3つと関連テーブルで構成。</p>
+        
+        <div class="table-overview">
+            <div class="table-card">
+                <div class="table-header">tasks (タスク)</div>
+                <div class="table-content">
+                    <ul class="field-list">
+                        <li class="field-item">
+                            <span class="field-name primary-key">id</span>
+                            <span class="field-type">UUID (PK)</span>
+                        </li>
+                        <li class="field-item">
+                            <span class="field-name">title</span>
+                            <span class="field-type">VARCHAR(100)</span>
+                        </li>
+                        <li class="field-item">
+                            <span class="field-name">description</span>
+                            <span class="field-type">TEXT</span>
+                        </li>
+                        <li class="field-item">
+                            <span class="field-name">category</span>
+                            <span class="field-type">ENUM</span>
+                        </li>
+                        <li class="field-item">
+                            <span class="field-name">priority</span>
+                            <span class="field-type">ENUM</span>
+                        </li>
+                        <li class="field-item">
+                            <span class="field-name">urgency</span>
+                            <span class="field-type">ENUM</span>
+                        </li>
+                        <li class="field-item">
+                            <span class="field-name">status</span>
+                            <span class="field-type">ENUM</span>
+                        </li>
+                        <li class="field-item">
+                            <span class="field-name">progress</span>
+                            <span class="field-type">INTEGER</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="table-card">
+                <div class="table-header">subtasks (サブタスク)</div>
+                <div class="table-content">
+                    <ul class="field-list">
+                        <li class="field-item">
+                            <span class="field-name primary-key">id</span>
+                            <span class="field-type">UUID (PK)</span>
+                        </li>
+                        <li class="field-item">
+                            <span class="field-name foreign-key">task_id</span>
+                            <span class="field-type">UUID (FK)</span>
+                        </li>
+                        <li class="field-item">
+                            <span class="field-name">title</span>
+                            <span class="field-type">VARCHAR(200)</span>
+                        </li>
+                        <li class="field-item">
+                            <span class="field-name">completed</span>
+                            <span class="field-type">BOOLEAN</span>
+                        </li>
+                        <li class="field-item">
+                            <span class="field-name">order_index</span>
+                            <span class="field-type">INTEGER</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="table-card">
+                <div class="table-header">task_comments (コメント)</div>
+                <div class="table-content">
+                    <ul class="field-list">
+                        <li class="field-item">
+                            <span class="field-name primary-key">id</span>
+                            <span class="field-type">UUID (PK)</span>
+                        </li>
+                        <li class="field-item">
+                            <span class="field-name foreign-key">task_id</span>
+                            <span class="field-type">UUID (FK)</span>
+                        </li>
+                        <li class="field-item">
+                            <span class="field-name">content</span>
+                            <span class="field-type">TEXT</span>
+                        </li>
+                        <li class="field-item">
+                            <span class="field-name">created_at</span>
+                            <span class="field-type">TIMESTAMP</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <h2>2. ER図</h2>
+        <div class="er-diagram">
+            <svg width="1000" height="600" viewBox="0 0 1000 600">
+                <!-- Tasks テーブル -->
+                <rect x="50" y="50" width="300" height="400" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" rx="8"/>
+                <rect x="50" y="50" width="300" height="40" fill="#1976d2" rx="8"/>
+                <text x="200" y="75" text-anchor="middle" fill="white" font-weight="bold" font-size="16">tasks</text>
+                
+                <text x="60" y="110" font-size="14" font-weight="bold" fill="#f44336">🔑 id (UUID)</text>
+                <text x="60" y="130" font-size="14">title (VARCHAR(100))</text>
+                <text x="60" y="150" font-size="14">description (TEXT)</text>
+                <text x="60" y="170" font-size="14">category (ENUM)</text>
+                <text x="60" y="190" font-size="14">priority (ENUM)</text>
+                <text x="60" y="210" font-size="14">urgency (ENUM)</text>
+                <text x="60" y="230" font-size="14">status (ENUM)</text>
+                <text x="60" y="250" font-size="14">progress (INTEGER)</text>
+                <text x="60" y="270" font-size="14">due_date (TIMESTAMP)</text>
+                <text x="60" y="290" font-size="14">planned_start_date (TIMESTAMP)</text>
+                <text x="60" y="310" font-size="14">planned_end_date (TIMESTAMP)</text>
+                <text x="60" y="330" font-size="14">actual_start_date (TIMESTAMP)</text>
+                <text x="60" y="350" font-size="14">actual_end_date (TIMESTAMP)</text>
+                <text x="60" y="370" font-size="14">estimated_hours (FLOAT)</text>
+                <text x="60" y="390" font-size="14">actual_hours (FLOAT)</text>
+                <text x="60" y="410" font-size="14">notes (TEXT)</text>
+                <text x="60" y="430" font-size="14">created_at (TIMESTAMP)</text>
+                
+                <!-- Subtasks テーブル -->
+                <rect x="450" y="50" width="250" height="200" fill="#fff3e0" stroke="#ff9800" stroke-width="2" rx="8"/>
+                <rect x="450" y="50" width="250" height="40" fill="#ff9800" rx="8"/>
+                <text x="575" y="75" text-anchor="middle" fill="white" font-weight="bold" font-size="16">subtasks</text>
+                
+                <text x="460" y="110" font-size="14" font-weight="bold" fill="#f44336">🔑 id (UUID)</text>
+                <text x="460" y="130" font-size="14" font-weight="bold" fill="#ff9800">🔗 task_id (UUID)</text>
+                <text x="460" y="150" font-size="14">title (VARCHAR(200))</text>
+                <text x="460" y="170" font-size="14">completed (BOOLEAN)</text>
+                <text x="460" y="190" font-size="14">order_index (INTEGER)</text>
+                <text x="460" y="210" font-size="14">created_at (TIMESTAMP)</text>
+                
+                <!-- Task Comments テーブル -->
+                <rect x="450" y="300" width="250" height="150" fill="#f3e5f5" stroke="#9c27b0" stroke-width="2" rx="8"/>
+                <rect x="450" y="300" width="250" height="40" fill="#9c27b0" rx="8"/>
+                <text x="575" y="325" text-anchor="middle" fill="white" font-weight="bold" font-size="16">task_comments</text>
+                
+                <text x="460" y="360" font-size="14" font-weight="bold" fill="#f44336">🔑 id (UUID)</text>
+                <text x="460" y="380" font-size="14" font-weight="bold" fill="#ff9800">🔗 task_id (UUID)</text>
+                <text x="460" y="400" font-size="14">content (TEXT)</text>
+                <text x="460" y="420" font-size="14">created_at (TIMESTAMP)</text>
+                
+                <!-- リレーション線 -->
+                <!-- Tasks -> Subtasks -->
+                <line x1="350" y1="150" x2="450" y2="130" stroke="#666" stroke-width="2"/>
+                <text x="380" y="135" font-size="12" fill="#666">1:N</text>
+                
+                <!-- Tasks -> Task Comments -->
+                <line x1="350" y1="380" x2="450" y2="380" stroke="#666" stroke-width="2"/>
+                <text x="380" y="375" font-size="12" fill="#666">1:N</text>
+                
+                <!-- 凡例 -->
+                <rect x="750" y="50" width="200" height="120" fill="#f8f9fa" stroke="#ddd" stroke-width="1" rx="4"/>
+                <text x="760" y="75" font-size="14" font-weight="bold">凡例</text>
+                <text x="760" y="95" font-size="12" fill="#f44336">🔑 主キー (Primary Key)</text>
+                <text x="760" y="115" font-size="12" fill="#ff9800">🔗 外部キー (Foreign Key)</text>
+                <text x="760" y="135" font-size="12" fill="#666">1:N 一対多リレーション</text>
+            </svg>
+        </div>
+        
+        <h2>3. テーブル詳細定義</h2>
+        
+        <!-- Tasks テーブル詳細 -->
+        <div class="table-detail">
+            <div class="detail-header">tasks テーブル</div>
+            <table class="detail-table">
+                <thead>
+                    <tr>
+                        <th>カラム名</th>
+                        <th>データ型</th>
+                        <th>制約</th>
+                        <th>説明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>id</td>
+                        <td>UUID</td>
+                        <td><span class="constraint pk">PK</span><span class="constraint nn">NOT NULL</span></td>
+                        <td>タスクの一意識別子</td>
+                    </tr>
+                    <tr>
+                        <td>title</td>
+                        <td>VARCHAR(100)</td>
+                        <td><span class="constraint nn">NOT NULL</span></td>
+                        <td>タスク名</td>
+                    </tr>
+                    <tr>
+                        <td>description</td>
+                        <td>TEXT</td>
+                        <td></td>
+                        <td>タスクの詳細説明</td>
+                    </tr>
+                    <tr>
+                        <td>category</td>
+                        <td>ENUM('work', 'private', 'study', 'other')</td>
+                        <td><span class="constraint nn">NOT NULL</span></td>
+                        <td>タスクの種別</td>
+                    </tr>
+                    <tr>
+                        <td>priority</td>
+                        <td>ENUM('high', 'medium', 'low')</td>
+                        <td><span class="constraint nn">NOT NULL</span></td>
+                        <td>優先度</td>
+                    </tr>
+                    <tr>
+                        <td>urgency</td>
+                        <td>ENUM('high', 'medium', 'low')</td>
+                        <td><span class="constraint nn">NOT NULL</span></td>
+                        <td>緊急度</td>
+                    </tr>
+                    <tr>
+                        <td>status</td>
+                        <td>ENUM('not_started', 'in_progress', 'completed', 'on_hold')</td>
+                        <td><span class="constraint nn">NOT NULL</span></td>
+                        <td>タスクのステータス</td>
+                    </tr>
+                    <tr>
+                        <td>progress</td>
+                        <td>INTEGER</td>
+                        <td>CHECK (progress >= 0 AND progress <= 100)</td>
+                        <td>進捗率（0-100）</td>
+                    </tr>
+                    <tr>
+                        <td>due_date</td>
+                        <td>TIMESTAMP</td>
+                        <td></td>
+                        <td>期限日時</td>
+                    </tr>
+                    <tr>
+                        <td>planned_start_date</td>
+                        <td>TIMESTAMP</td>
+                        <td></td>
+                        <td>開始予定日時</td>
+                    </tr>
+                    <tr>
+                        <td>planned_end_date</td>
+                        <td>TIMESTAMP</td>
+                        <td></td>
+                        <td>終了予定日時</td>
+                    </tr>
+                    <tr>
+                        <td>actual_start_date</td>
+                        <td>TIMESTAMP</td>
+                        <td></td>
+                        <td>実際の開始日時</td>
+                    </tr>
+                    <tr>
+                        <td>actual_end_date</td>
+                        <td>TIMESTAMP</td>
+                        <td></td>
+                        <td>実際の終了日時</td>
+                    </tr>
+                    <tr>
+                        <td>estimated_hours</td>
+                        <td>FLOAT</td>
+                        <td>CHECK (estimated_hours >= 0)</td>
+                        <td>見積時間</td>
+                    </tr>
+                    <tr>
+                        <td>actual_hours</td>
+                        <td>FLOAT</td>
+                        <td>CHECK (actual_hours >= 0)</td>
+                        <td>実績時間</td>
+                    </tr>
+                    <tr>
+                        <td>notes</td>
+                        <td>TEXT</td>
+                        <td></td>
+                        <td>メモ・備考</td>
+                    </tr>
+                    <tr>
+                        <td>created_at</td>
+                        <td>TIMESTAMP</td>
+                        <td><span class="constraint nn">NOT NULL</span></td>
+                        <td>作成日時</td>
+                    </tr>
+                    <tr>
+                        <td>updated_at</td>
+                        <td>TIMESTAMP</td>
+                        <td><span class="constraint nn">NOT NULL</span></td>
+                        <td>更新日時</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Subtasks テーブル詳細 -->
+        <div class="table-detail">
+            <div class="detail-header">subtasks テーブル</div>
+            <table class="detail-table">
+                <thead>
+                    <tr>
+                        <th>カラム名</th>
+                        <th>データ型</th>
+                        <th>制約</th>
+                        <th>説明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>id</td>
+                        <td>UUID</td>
+                        <td><span class="constraint pk">PK</span><span class="constraint nn">NOT NULL</span></td>
+                        <td>サブタスクの一意識別子</td>
+                    </tr>
+                    <tr>
+                        <td>task_id</td>
+                        <td>UUID</td>
+                        <td><span class="constraint fk">FK</span><span class="constraint nn">NOT NULL</span></td>
+                        <td>親タスクのID</td>
+                    </tr>
+                    <tr>
+                        <td>title</td>
+                        <td>VARCHAR(200)</td>
+                        <td><span class="constraint nn">NOT NULL</span></td>
+                        <td>サブタスク名</td>
+                    </tr>
+                    <tr>
+                        <td>completed</td>
+                        <td>BOOLEAN</td>
+                        <td><span class="constraint nn">NOT NULL</span></td>
+                        <td>完了フラグ</td>
+                    </tr>
+                    <tr>
+                        <td>order_index</td>
+                        <td>INTEGER</td>
+                        <td><span class="constraint nn">NOT NULL</span></td>
+                        <td>表示順序</td>
+                    </tr>
+                    <tr>
+                        <td>created_at</td>
+                        <td>TIMESTAMP</td>
+                        <td><span class="constraint nn">NOT NULL</span></td>
+                        <td>作成日時</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Task Comments テーブル詳細 -->
+        <div class="table-detail">
+            <div class="detail-header">task_comments テーブル</div>
+            <table class="detail-table">
+                <thead>
+                    <tr>
+                        <th>カラム名</th>
+                        <th>データ型</th>
+                        <th>制約</th>
+                        <th>説明</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>id</td>
+                        <td>UUID</td>
+                        <td><span class="constraint pk">PK</span><span class="constraint nn">NOT NULL</span></td>
+                        <td>コメントの一意識別子</td>
+                    </tr>
+                    <tr>
+                        <td>task_id</td>
+                        <td>UUID</td>
+                        <td><span class="constraint fk">FK</span><span class="constraint nn">NOT NULL</span></td>
+                        <td>対象タスクのID</td>
+                    </tr>
+                    <tr>
+                        <td>content</td>
+                        <td>TEXT</td>
+                        <td><span class="constraint nn">NOT NULL</span></td>
+                        <td>コメント内容</td>
+                    </tr>
+                    <tr>
+                        <td>created_at</td>
+                        <td>TIMESTAMP</td>
+                        <td><span class="constraint nn">NOT NULL</span></td>
+                        <td>作成日時</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <h2>4. インデックス設計</h2>
+        <div class="table-detail">
+            <div class="detail-header">インデックス一覧</div>
+            <table class="detail-table">
+                <thead>
+                    <tr>
+                        <th>テーブル</th>
+                        <th>インデックス名</th>
+                        <th>カラム</th>
+                        <th>目的</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>tasks</td>
+                        <td>idx_tasks_category</td>
+                        <td>category</td>
+                        <td>種別でのフィルタリング高速化</td>
+                    </tr>
+                    <tr>
+                        <td>tasks</td>
+                        <td>idx_tasks_priority_urgency</td>
+                        <td>priority, urgency</td>
+                        <td>マトリックス表示の高速化</td>
+                    </tr>
+                    <tr>
+                        <td>tasks</td>
+                        <td>idx_tasks_status</td>
+                        <td>status</td>
+                        <td>ステータス検索の高速化</td>
+                    </tr>
+                    <tr>
+                        <td>tasks</td>
+                        <td>idx_tasks_due_date</td>
+                        <td>due_date</td>
+                        <td>期限での並び替え高速化</td>
+                    </tr>
+                    <tr>
+                        <td>subtasks</td>
+                        <td>idx_subtasks_task_id</td>
+                        <td>task_id</td>
+                        <td>親タスクでの検索高速化</td>
+                    </tr>
+                    <tr>
+                        <td>task_comments</td>
+                        <td>idx_comments_task_id</td>
+                        <td>task_id</td>
+                        <td>タスクコメント取得の高速化</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
