@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import os
 from dotenv import load_dotenv
-from app.api import tasks
+from app.api import tasks, subtasks, comments
 from app.database.connection import engine
 from app.models import task, subtask, comment
 
@@ -45,6 +45,8 @@ async def root():
 
 # APIルーターの追加
 app.include_router(tasks.router, prefix="/api/v1")
+app.include_router(subtasks.router, prefix="/api/v1")
+app.include_router(comments.router, prefix="/api/v1")
 
 # ヘルスチェック
 @app.get("/health")

@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List, Optional, Dict
 from uuid import UUID
+from datetime import datetime
 
 from app.database.connection import get_db
 from app.models.task import Task, TaskCategory, TaskPriority, TaskUrgency, TaskStatus
@@ -156,5 +157,68 @@ async def get_matrix_data(db: Session = Depends(get_db)):
         "summary": {
             "total_tasks": len(tasks),
             "by_quadrant": quadrant_counts
+        }
+    }
+
+@router.get("/calendar", response_model=dict)
+async def get_calendar_data(
+    year: int = Query(...),
+    month: int = Query(..., ge=1, le=12),
+    db: Session = Depends(get_db)
+):
+    """カレンダー表示データ取得"""
+    # 指定月のタスクを取得
+    from datetime import datetime, timedelta
+    start_date = datetime(year, month, 1)
+    if month == 12:
+        end_date = datetime(year + 1, 1, 1) - timedelta(days=1)
+    else:
+        end_date = datetime(year, month + 1, 1) - timedelta(days=1)
+    
+    tasks = db.query(Task).filter(
+        (Task.due_date.between(start_date, end_date)) |
+        (Task.planned_start_date.between(start_date, end_date)) |
+        (Task.actual_start_date.between(start_date, end_date))
+    ).all()
+    
+    calendar_data: Dict[str, List[dict]] = {}
+    due_count = start_count = milestone_count = 0
+    
+    for task in tasks:
+        # 期限
+        if task.due_date and start_date <= task.due_date <= end_date:
+            date_key = task.due_date.strftime("%Y-%m-%d")
+            if date_key not in calendar_data:
+                calendar_data[date_key] = []
+            calendar_data[date_key].append({
+                "id": task.id,
+                "title": task.title,
+                "type": "due",
+                "priority": task.priority,
+                "urgency": task.urgency
+            })
+            due_count += 1
+        
+        # 開始予定
+        if task.planned_start_date and start_date <= task.planned_start_date <= end_date:
+            date_key = task.planned_start_date.strftime("%Y-%m-%d")
+            if date_key not in calendar_data:
+                calendar_data[date_key] = []
+            calendar_data[date_key].append({
+                "id": task.id,
+                "title": task.title,
+                "type": "start",
+                "priority": task.priority,
+                "urgency": task.urgency
+            })
+            start_count += 1
+    
+    return {
+        "calendar_data": calendar_data,
+        "summary": {
+            "total_events": due_count + start_count + milestone_count,
+            "due_dates": due_count,
+            "start_dates": start_count,
+            "milestones": milestone_count
         }
     }
