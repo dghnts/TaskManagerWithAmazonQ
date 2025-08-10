@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import os
 from dotenv import load_dotenv
+from app.api import tasks
+from app.database.connection import engine
+from app.models import task, subtask, comment
 
 # 環境変数を読み込み
 load_dotenv()
@@ -11,6 +14,8 @@ load_dotenv()
 async def lifespan(app: FastAPI):
     # アプリケーション起動時の処理
     print("Starting Task Management API...")
+    # データベーステーブル作成
+    task.Base.metadata.create_all(bind=engine)
     yield
     # アプリケーション終了時の処理
     print("Shutting down Task Management API...")
@@ -37,6 +42,9 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {"message": "Task Management API", "version": "1.0.0"}
+
+# APIルーターの追加
+app.include_router(tasks.router, prefix="/api/v1")
 
 # ヘルスチェック
 @app.get("/health")
