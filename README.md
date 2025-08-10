@@ -58,10 +58,8 @@ TaskManager/
 
 ### バックエンドセットアップ
 
-1. 仮想環境の作成と有効化
+1. 仮想環境の有効化
 ```bash
-cd backend
-python -m venv venv
 # Windows
 venv\Scripts\activate
 # macOS/Linux
