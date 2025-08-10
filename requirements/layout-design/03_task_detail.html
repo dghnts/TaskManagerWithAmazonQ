@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タスク管理アプリ - タスク詳細</title>
+    <link rel="stylesheet" href="css/common.css">
+    <style>
+        .detail-container {
+            padding: 24px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #1976d2;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .detail-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .section {
+            margin-bottom: 32px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: #333;
+            border-left: 4px solid #1976d2;
+            padding-left: 12px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .info-item {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 6px;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        
+        .info-value {
+            font-weight: 500;
+        }
+        
+        .progress-section {
+            background: #f9f9f9;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .progress-value {
+            font-size: 24px;
+            font-weight: 500;
+            color: #1976d2;
+        }
+        
+        .milestone-list {
+            list-style: none;
+            margin-top: 16px;
+        }
+        
+        .milestone-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .milestone-item:last-child {
+            border-bottom: none;
+        }
+        
+        .milestone-status {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        .milestone-completed {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .milestone-pending {
+            background: #e0e0e0;
+            color: #666;
+        }
+        
+        .subtask-list {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .subtask-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .subtask-item:last-child {
+            border-bottom: none;
+        }
+        
+        .subtask-checkbox {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .subtask-text {
+            flex: 1;
+        }
+        
+        .subtask-completed {
+            text-decoration: line-through;
+            color: #666;
+        }
+        
+        .comment-section {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .comment-input {
+            padding: 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .comment-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .comment-item {
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .comment-item:last-child {
+            border-bottom: none;
+        }
+        
+        .comment-meta {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .reference-list {
+            list-style: none;
+        }
+        
+        .reference-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .reference-link {
+            color: #1976d2;
+            text-decoration: none;
+            flex: 1;
+        }
+        
+        .reference-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ヘッダー -->
+        <header class="header">
+            <h1>タスク管理アプリ</h1>
+            <div class="user-menu">ユーザー設定</div>
+        </header>
+        
+        <!-- ナビゲーション -->
+        <nav class="navigation">
+            <ul class="nav-tabs">
+                <li class="nav-tab">一覧</li>
+                <li class="nav-tab">マトリックス</li>
+                <li class="nav-tab">カレンダー</li>
+            </ul>
+        </nav>
+        
+        <!-- タスク詳細 -->
+        <div class="detail-container">
+            <div class="detail-header">
+                <a href="#" class="back-btn">← 戻る</a>
+                <div class="detail-actions">
+                    <button class="btn btn-secondary">編集</button>
+                    <button class="btn btn-danger">削除</button>
+                </div>
+            </div>
+            
+            <!-- 基本情報 -->
+            <div class="section">
+                <h2 class="section-title">基本情報</h2>
+                <div class="card">
+                    <div class="card-body">
+                        <h3 style="margin-bottom: 16px; font-size: 20px;">プロジェクト企画書作成</h3>
+                        <p style="margin-bottom: 16px; line-height: 1.6; color: #666;">
+                            新規プロジェクトの企画書を作成する。市場調査と競合分析を含む包括的な内容で作成予定。
+                            ステークホルダーへの提案資料としても活用する。
+                        </p>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">種別</div>
+                                <div class="info-value">仕事</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">優先度</div>
+                                <div class="info-value">
+                                    <span class="badge priority-high">高</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">緊急度</div>
+                                <div class="info-value">
+                                    <span class="badge urgency-high">⚡高</span>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">期限</div>
+                                <div class="info-value">2024/12/25</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">ステータス</div>
+                                <div class="info-value">進行中</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- スケジュール -->
+            <div class="section">
+                <h2 class="section-title">スケジュール</h2>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <div class="info-label">開始予定</div>
+                                <div class="info-value">2024/12/20</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">実際開始</div>
+                                <div class="info-value">2024/12/21</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">終了予定</div>
+                                <div class="info-value">2024/12/25</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">実際終了</div>
+                                <div class="info-value">─</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">見積時間</div>
+                                <div class="info-value">8時間</div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">実績時間</div>
+                                <div class="info-value">5時間</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 進捗 -->
+            <div class="section">
+                <h2 class="section-title">進捗</h2>
+                <div class="progress-section">
+                    <div class="progress-header">
+                        <span>進捗率</span>
+                        <span class="progress-value">60%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" style="width: 60%;"></div>
+                    </div>
+                    <button class="btn btn-secondary" style="margin-top: 12px;">進捗を更新</button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <strong>マイルストーン</strong>
+                    </div>
+                    <div class="card-body">
+                        <ul class="milestone-list">
+                            <li class="milestone-item">
+                                <div class="milestone-status milestone-completed">✓</div>
+                                <div>
+                                    <div>要件整理完了</div>
+                                    <div style="font-size: 12px; color: #666;">2024/12/21</div>
+                                </div>
+                            </li>
+                            <li class="milestone-item">
+                                <div class="milestone-status milestone-pending">○</div>
+                                <div>
+                                    <div>初稿作成</div>
+                                    <div style="font-size: 12px; color: #666;">2024/12/23</div>
+                                </div>
+                            </li>
+                            <li class="milestone-item">
+                                <div class="milestone-status milestone-pending">○</div>
+                                <div>
+                                    <div>レビュー・修正</div>
+                                    <div style="font-size: 12px; color: #666;">2024/12/24</div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 詳細計画 -->
+            <div class="section">
+                <h2 class="section-title">詳細計画</h2>
+                <div class="card">
+                    <div class="card-header">
+                        <strong>サブタスク</strong>
+                        <button class="btn btn-primary" style="float: right;">+ 追加</button>
+                    </div>
+                    <div class="subtask-list">
+                        <div class="subtask-item">
+                            <input type="checkbox" class="subtask-checkbox" checked>
+                            <span class="subtask-text subtask-completed">市場調査</span>
+                        </div>
+                        <div class="subtask-item">
+                            <input type="checkbox" class="subtask-checkbox" checked>
+                            <span class="subtask-text subtask-completed">競合分析</span>
+                        </div>
+                        <div class="subtask-item">
+                            <input type="checkbox" class="subtask-checkbox">
+                            <span class="subtask-text">企画書執筆</span>
+                        </div>
+                        <div class="subtask-item">
+                            <input type="checkbox" class="subtask-checkbox">
+                            <span class="subtask-text">資料作成</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- メモ・コメント -->
+            <div class="section">
+                <h2 class="section-title">メモ・コメント</h2>
+                <div class="comment-section">
+                    <div class="comment-input">
+                        <textarea class="form-control" rows="3" placeholder="コメントを入力..."></textarea>
+                        <button class="btn btn-primary" style="margin-top: 8px;">追加</button>
+                    </div>
+                    <div class="comment-list">
+                        <div class="comment-item">
+                            <div class="comment-meta">2024/12/21 15:30</div>
+                            <div>市場調査完了。想定より時間がかかった。競合他社の動向も詳しく調べることができた。</div>
+                        </div>
+                        <div class="comment-item">
+                            <div class="comment-meta">2024/12/20 09:00</div>
+                            <div>タスク開始。まずは市場調査から着手する。</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card" style="margin-top: 16px;">
+                    <div class="card-header">
+                        <strong>参考資料</strong>
+                    </div>
+                    <div class="card-body">
+                        <ul class="reference-list">
+                            <li class="reference-item">
+                                <span>📄</span>
+                                <a href="#" class="reference-link">業界レポート2024.pdf</a>
+                                <button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;">削除</button>
+                            </li>
+                            <li class="reference-item">
+                                <span>🔗</span>
+                                <a href="#" class="reference-link">https://example.com/market-data</a>
+                                <button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;">削除</button>
+                            </li>
+                        </ul>
+                        <button class="btn btn-secondary" style="margin-top: 12px;">+ 参考資料を追加</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

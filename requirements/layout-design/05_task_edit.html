@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タスク管理アプリ - タスク編集</title>
+    <link rel="stylesheet" href="css/common.css">
+    <style>
+        .edit-container {
+            padding: 24px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .edit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #1976d2;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .edit-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .form-section {
+            margin-bottom: 32px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: #333;
+            border-left: 4px solid #1976d2;
+            padding-left: 12px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .form-group-full {
+            grid-column: 1 / -1;
+        }
+        
+        .textarea-large {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .milestone-editor {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        
+        .milestone-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+        }
+        
+        .milestone-checkbox {
+            width: 18px;
+            height: 18px;
+        }
+        
+        .milestone-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 14px;
+        }
+        
+        .milestone-input:focus {
+            outline: none;
+            background: #f0f0f0;
+            border-radius: 4px;
+            padding: 4px 8px;
+        }
+        
+        .milestone-date {
+            width: 120px;
+        }
+        
+        .reference-editor {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 16px;
+        }
+        
+        .reference-input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .reference-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+        
+        .reference-text {
+            flex: 1;
+            color: #1976d2;
+            text-decoration: none;
+        }
+        
+        .delete-btn {
+            padding: 4px 8px;
+            font-size: 12px;
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .add-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            background: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .progress-input-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .progress-slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .progress-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #1976d2;
+            cursor: pointer;
+        }
+        
+        .progress-value {
+            font-weight: 500;
+            color: #1976d2;
+            min-width: 40px;
+        }
+        
+        .save-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4caf50;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .save-indicator.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ヘッダー -->
+        <header class="header">
+            <h1>タスク管理アプリ</h1>
+            <div class="user-menu">ユーザー設定</div>
+        </header>
+        
+        <!-- ナビゲーション -->
+        <nav class="navigation">
+            <ul class="nav-tabs">
+                <li class="nav-tab">一覧</li>
+                <li class="nav-tab">マトリックス</li>
+                <li class="nav-tab">カレンダー</li>
+            </ul>
+        </nav>
+        
+        <!-- タスク編集 -->
+        <div class="edit-container">
+            <div class="edit-header">
+                <a href="#" class="back-btn">← 戻る</a>
+                <div class="edit-actions">
+                    <button class="btn btn-primary">保存</button>
+                    <button class="btn btn-secondary">キャンセル</button>
+                </div>
+            </div>
+            
+            <form id="taskEditForm">
+                <!-- 基本情報 -->
+                <div class="form-section">
+                    <h2 class="section-title">基本情報</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="form-group form-group-full">
+                                <label class="form-label">タスク名 *</label>
+                                <input type="text" class="form-control" value="プロジェクト企画書作成" required>
+                            </div>
+                            
+                            <div class="form-group form-group-full">
+                                <label class="form-label">説明</label>
+                                <textarea class="form-control textarea-large" placeholder="タスクの詳細説明を入力...">新規プロジェクトの企画書を作成する。市場調査と競合分析を含む包括的な内容で作成予定。ステークホルダーへの提案資料としても活用する。</textarea>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">種別 *</label>
+                                    <select class="form-control" required>
+                                        <option value="work" selected>仕事</option>
+                                        <option value="private">プライベート</option>
+                                        <option value="study">学習</option>
+                                        <option value="other">その他</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">優先度 *</label>
+                                    <select class="form-control" required>
+                                        <option value="high" selected>高</option>
+                                        <option value="medium">中</option>
+                                        <option value="low">低</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">緊急度 *</label>
+                                    <select class="form-control" required>
+                                        <option value="high" selected>高</option>
+                                        <option value="medium">中</option>
+                                        <option value="low">低</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">期限</label>
+                                    <input type="date" class="form-control" value="2024-12-25">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">ステータス</label>
+                                    <select class="form-control">
+                                        <option value="not_started">未着手</option>
+                                        <option value="in_progress" selected>進行中</option>
+                                        <option value="completed">完了</option>
+                                        <option value="on_hold">保留</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- スケジュール -->
+                <div class="form-section">
+                    <h2 class="section-title">スケジュール</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">開始予定日</label>
+                                    <input type="date" class="form-control" value="2024-12-20">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">実際開始日</label>
+                                    <input type="date" class="form-control" value="2024-12-21">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">終了予定日</label>
+                                    <input type="date" class="form-control" value="2024-12-25">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">実際終了日</label>
+                                    <input type="date" class="form-control">
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">見積時間（時間）</label>
+                                    <input type="number" class="form-control" value="8" min="0" step="0.5">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label class="form-label">実績時間（時間）</label>
+                                    <input type="number" class="form-control" value="5" min="0" step="0.5">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 進捗 -->
+                <div class="form-section">
+                    <h2 class="section-title">進捗</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">進捗率</label>
+                                <div class="progress-input-group">
+                                    <input type="range" class="progress-slider" min="0" max="100" value="60" id="progressSlider">
+                                    <span class="progress-value" id="progressValue">60%</span>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">マイルストーン</label>
+                                <div class="milestone-editor">
+                                    <div class="milestone-item">
+                                        <input type="checkbox" class="milestone-checkbox" checked>
+                                        <input type="text" class="milestone-input" value="要件整理完了">
+                                        <input type="date" class="form-control milestone-date" value="2024-12-21">
+                                        <button type="button" class="delete-btn">削除</button>
+                                    </div>
+                                    
+                                    <div class="milestone-item">
+                                        <input type="checkbox" class="milestone-checkbox">
+                                        <input type="text" class="milestone-input" value="初稿作成">
+                                        <input type="date" class="form-control milestone-date" value="2024-12-23">
+                                        <button type="button" class="delete-btn">削除</button>
+                                    </div>
+                                    
+                                    <div class="milestone-item">
+                                        <input type="checkbox" class="milestone-checkbox">
+                                        <input type="text" class="milestone-input" value="レビュー・修正">
+                                        <input type="date" class="form-control milestone-date" value="2024-12-24">
+                                        <button type="button" class="delete-btn">削除</button>
+                                    </div>
+                                    
+                                    <button type="button" class="add-btn">+ マイルストーン追加</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 参考資料 -->
+                <div class="form-section">
+                    <h2 class="section-title">参考資料</h2>
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="reference-editor">
+                                <div class="reference-input-group">
+                                    <input type="text" class="form-control" placeholder="参考資料のURL・ファイル名・メモを入力..." id="referenceInput">
+                                    <button type="button" class="add-btn" onclick="addReference()">+ 追加</button>
+                                </div>
+                                
+                                <div class="reference-item">
+                                    <span>📄</span>
+                                    <span class="reference-text">業界レポート2024.pdf</span>
+                                    <button type="button" class="delete-btn">削除</button>
+                                </div>
+                                
+                                <div class="reference-item">
+                                    <span>🔗</span>
+                                    <a href="#" class="reference-text">https://example.com/market-data</a>
+                                    <button type="button" class="delete-btn">削除</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 保存インジケーター -->
+    <div class="save-indicator" id="saveIndicator">
+        ✓ 保存しました
+    </div>
+    
+    <script>
+        // 進捗スライダーの更新
+        const progressSlider = document.getElementById('progressSlider');
+        const progressValue = document.getElementById('progressValue');
+        
+        progressSlider.addEventListener('input', function() {
+            progressValue.textContent = this.value + '%';
+        });
+        
+        // 参考資料の追加
+        function addReference() {
+            const input = document.getElementById('referenceInput');
+            const value = input.value.trim();
+            
+            if (value) {
+                const referenceEditor = document.querySelector('.reference-editor');
+                const newItem = document.createElement('div');
+                newItem.className = 'reference-item';
+                
+                const icon = value.startsWith('http') ? '🔗' : '📄';
+                newItem.innerHTML = `
+                    <span>${icon}</span>
+                    <span class="reference-text">${value}</span>
+                    <button type="button" class="delete-btn" onclick="this.parentElement.remove()">削除</button>
+                `;
+                
+                referenceEditor.insertBefore(newItem, referenceEditor.lastElementChild);
+                input.value = '';
+            }
+        }
+        
+        // マイルストーン追加
+        document.querySelector('.milestone-editor .add-btn').addEventListener('click', function() {
+            const milestoneEditor = document.querySelector('.milestone-editor');
+            const newMilestone = document.createElement('div');
+            newMilestone.className = 'milestone-item';
+            newMilestone.innerHTML = `
+                <input type="checkbox" class="milestone-checkbox">
+                <input type="text" class="milestone-input" placeholder="マイルストーン名">
+                <input type="date" class="form-control milestone-date">
+                <button type="button" class="delete-btn" onclick="this.parentElement.remove()">削除</button>
+            `;
+            
+            milestoneEditor.insertBefore(newMilestone, this);
+        });
+        
+        // 自動保存機能（デモ）
+        let saveTimeout;
+        document.getElementById('taskEditForm').addEventListener('input', function() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(function() {
+                const indicator = document.getElementById('saveIndicator');
+                indicator.classList.add('show');
+                setTimeout(() => indicator.classList.remove('show'), 2000);
+            }, 1000);
+        });
+        
+        // Enterキーで参考資料追加
+        document.getElementById('referenceInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addReference();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,815 @@
+openapi: 3.0.3
+info:
+  title: タスク管理アプリ API
+  description: 個人用タスク管理アプリケーションのRESTful API
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: 開発環境
+
+paths:
+  /tasks:
+    get:
+      summary: タスク一覧取得
+      description: フィルタリングとページングに対応したタスク一覧を取得
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [work, private, study, other]
+          description: カテゴリフィルター
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [high, medium, low]
+          description: 優先度フィルター
+        - name: urgency
+          in: query
+          schema:
+            type: string
+            enum: [high, medium, low]
+          description: 緊急度フィルター
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [not_started, in_progress, completed, on_hold]
+          description: ステータスフィルター
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: タスク名・説明での検索
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: ページ番号
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+          description: 1ページあたりの件数
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [created_at, due_date, priority, urgency]
+            default: created_at
+          description: ソート項目
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+          description: ソート順
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskListResponse'
+        '400':
+          description: リクエストエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: タスク作成
+      description: 新規タスクを作成
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskCreateRequest'
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '400':
+          description: リクエストエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tasks/{task_id}:
+    get:
+      summary: タスク詳細取得
+      description: 特定タスクの詳細情報を取得（サブタスク・コメント含む）
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: タスクID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskDetail'
+        '404':
+          description: タスクが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: タスク更新
+      description: タスク情報を更新
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: タスクID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaskUpdateRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Task'
+        '404':
+          description: タスクが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: バリデーションエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: タスク削除
+      description: タスクを削除（関連するサブタスク・コメントも削除）
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: タスクID
+      responses:
+        '204':
+          description: 削除成功
+        '404':
+          description: タスクが見つからない
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /tasks/matrix:
+    get:
+      summary: マトリックス表示データ取得
+      description: アイゼンハワーマトリックス表示用のデータを取得
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatrixResponse'
+
+  /tasks/calendar:
+    get:
+      summary: カレンダー表示データ取得
+      description: カレンダー表示用のデータを取得
+      parameters:
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 2020
+            maximum: 2030
+          description: 年
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+          description: 月
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarResponse'
+
+  /tasks/{task_id}/subtasks:
+    get:
+      summary: サブタスク一覧取得
+      description: 特定タスクのサブタスク一覧を取得
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: タスクID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SubTask'
+
+    post:
+      summary: サブタスク作成
+      description: サブタスクを作成
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: タスクID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubTaskCreateRequest'
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubTask'
+
+  /subtasks/{subtask_id}:
+    put:
+      summary: サブタスク更新
+      description: サブタスク情報を更新
+      parameters:
+        - name: subtask_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: サブタスクID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubTaskUpdateRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubTask'
+
+    delete:
+      summary: サブタスク削除
+      description: サブタスクを削除
+      parameters:
+        - name: subtask_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: サブタスクID
+      responses:
+        '204':
+          description: 削除成功
+
+  /tasks/{task_id}/comments:
+    get:
+      summary: コメント一覧取得
+      description: 特定タスクのコメント一覧を取得
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: タスクID
+      responses:
+        '200':
+          description: 成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Comment'
+
+    post:
+      summary: コメント作成
+      description: コメントを作成
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: タスクID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreateRequest'
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  /comments/{comment_id}:
+    delete:
+      summary: コメント削除
+      description: コメントを削除
+      parameters:
+        - name: comment_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: コメントID
+      responses:
+        '204':
+          description: 削除成功
+
+components:
+  schemas:
+    Task:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: タスクID
+        title:
+          type: string
+          maxLength: 100
+          description: タスク名
+        description:
+          type: string
+          nullable: true
+          description: タスクの詳細説明
+        category:
+          type: string
+          enum: [work, private, study, other]
+          description: タスクの種別
+        priority:
+          type: string
+          enum: [high, medium, low]
+          description: 優先度
+        urgency:
+          type: string
+          enum: [high, medium, low]
+          description: 緊急度
+        status:
+          type: string
+          enum: [not_started, in_progress, completed, on_hold]
+          description: ステータス
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: 進捗率
+        due_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: 期限日時
+        planned_start_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: 開始予定日時
+        planned_end_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: 終了予定日時
+        actual_start_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: 実際の開始日時
+        actual_end_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: 実際の終了日時
+        estimated_hours:
+          type: number
+          minimum: 0
+          nullable: true
+          description: 見積時間
+        actual_hours:
+          type: number
+          minimum: 0
+          nullable: true
+          description: 実績時間
+        notes:
+          type: string
+          nullable: true
+          description: メモ・備考
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+
+    TaskDetail:
+      allOf:
+        - $ref: '#/components/schemas/Task'
+        - type: object
+          properties:
+            subtasks:
+              type: array
+              items:
+                $ref: '#/components/schemas/SubTask'
+            comments:
+              type: array
+              items:
+                $ref: '#/components/schemas/Comment'
+
+    TaskCreateRequest:
+      type: object
+      required:
+        - title
+        - category
+        - priority
+        - urgency
+      properties:
+        title:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        category:
+          type: string
+          enum: [work, private, study, other]
+        priority:
+          type: string
+          enum: [high, medium, low]
+        urgency:
+          type: string
+          enum: [high, medium, low]
+        due_date:
+          type: string
+          format: date-time
+        planned_start_date:
+          type: string
+          format: date-time
+        planned_end_date:
+          type: string
+          format: date-time
+        estimated_hours:
+          type: number
+          minimum: 0
+        notes:
+          type: string
+
+    TaskUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+        category:
+          type: string
+          enum: [work, private, study, other]
+        priority:
+          type: string
+          enum: [high, medium, low]
+        urgency:
+          type: string
+          enum: [high, medium, low]
+        status:
+          type: string
+          enum: [not_started, in_progress, completed, on_hold]
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        due_date:
+          type: string
+          format: date-time
+        planned_start_date:
+          type: string
+          format: date-time
+        planned_end_date:
+          type: string
+          format: date-time
+        actual_start_date:
+          type: string
+          format: date-time
+        actual_end_date:
+          type: string
+          format: date-time
+        estimated_hours:
+          type: number
+          minimum: 0
+        actual_hours:
+          type: number
+          minimum: 0
+        notes:
+          type: string
+
+    SubTask:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        task_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          maxLength: 200
+        completed:
+          type: boolean
+        order_index:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    SubTaskCreateRequest:
+      type: object
+      required:
+        - title
+        - order_index
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        order_index:
+          type: integer
+
+    SubTaskUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 200
+        completed:
+          type: boolean
+        order_index:
+          type: integer
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        task_id:
+          type: string
+          format: uuid
+        content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    CommentCreateRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+
+    TaskListResponse:
+      type: object
+      properties:
+        tasks:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Task'
+              - type: object
+                properties:
+                  subtask_count:
+                    type: integer
+                  completed_subtasks:
+                    type: integer
+                  comment_count:
+                    type: integer
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+
+    MatrixResponse:
+      type: object
+      properties:
+        matrix:
+          type: object
+          properties:
+            high_high:
+              type: array
+              items:
+                $ref: '#/components/schemas/MatrixTask'
+            high_medium:
+              type: array
+              items:
+                $ref: '#/components/schemas/MatrixTask'
+            high_low:
+              type: array
+              items:
+                $ref: '#/components/schemas/MatrixTask'
+            medium_high:
+              type: array
+              items:
+                $ref: '#/components/schemas/MatrixTask'
+            medium_medium:
+              type: array
+              items:
+                $ref: '#/components/schemas/MatrixTask'
+            medium_low:
+              type: array
+              items:
+                $ref: '#/components/schemas/MatrixTask'
+            low_high:
+              type: array
+              items:
+                $ref: '#/components/schemas/MatrixTask'
+            low_medium:
+              type: array
+              items:
+                $ref: '#/components/schemas/MatrixTask'
+            low_low:
+              type: array
+              items:
+                $ref: '#/components/schemas/MatrixTask'
+        summary:
+          type: object
+          properties:
+            total_tasks:
+              type: integer
+            by_quadrant:
+              type: object
+              properties:
+                quadrant_1:
+                  type: integer
+                quadrant_2:
+                  type: integer
+                quadrant_3:
+                  type: integer
+                quadrant_4:
+                  type: integer
+
+    MatrixTask:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        priority:
+          type: string
+          enum: [high, medium, low]
+        urgency:
+          type: string
+          enum: [high, medium, low]
+        status:
+          type: string
+          enum: [not_started, in_progress, completed, on_hold]
+        progress:
+          type: integer
+
+    CalendarResponse:
+      type: object
+      properties:
+        calendar_data:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/CalendarEvent'
+        summary:
+          type: object
+          properties:
+            total_events:
+              type: integer
+            due_dates:
+              type: integer
+            start_dates:
+              type: integer
+            milestones:
+              type: integer
+
+    CalendarEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        type:
+          type: string
+          enum: [start, due, milestone]
+        priority:
+          type: string
+          enum: [high, medium, low]
+        urgency:
+          type: string
+          enum: [high, medium, low]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
