@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from uuid import UUID
+
 
 # ベーススキーマ
 class CommentBase(BaseModel):
@@ -12,8 +12,8 @@ class CommentCreate(CommentBase):
 
 # レスポンス用
 class Comment(CommentBase):
-    id: UUID
-    task_id: UUID
+    id: str
+    task_id: str
     created_at: datetime
 
     class Config:

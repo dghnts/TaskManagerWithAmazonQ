@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
-from uuid import UUID
+
 
 # ベーススキーマ
 class SubTaskBase(BaseModel):
@@ -20,8 +20,8 @@ class SubTaskUpdate(BaseModel):
 
 # レスポンス用
 class SubTask(SubTaskBase):
-    id: UUID
-    task_id: UUID
+    id: str
+    task_id: str
     completed: bool
     created_at: datetime
 

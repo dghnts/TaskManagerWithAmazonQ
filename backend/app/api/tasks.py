@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict
-from uuid import UUID
+
 from datetime import datetime
 
 from app.database.connection import get_db
@@ -89,76 +89,67 @@ async def create_task(task: TaskCreate, db: Session = Depends(get_db)):
     db.refresh(db_task)
     return db_task
 
-@router.get("/{task_id}", response_model=TaskDetail)
-async def get_task(task_id: UUID, db: Session = Depends(get_db)):
-    """タスク詳細取得"""
-    task = db.query(Task).filter(Task.id == task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
-    return task
-
-@router.put("/{task_id}", response_model=TaskSchema)
-async def update_task(task_id: UUID, task_update: TaskUpdate, db: Session = Depends(get_db)):
-    """タスク更新"""
-    task = db.query(Task).filter(Task.id == task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
-    
-    update_data = task_update.dict(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(task, field, value)
-    
-    db.commit()
-    db.refresh(task)
-    return task
-
-@router.delete("/{task_id}")
-async def delete_task(task_id: UUID, db: Session = Depends(get_db)):
-    """タスク削除"""
-    task = db.query(Task).filter(Task.id == task_id).first()
-    if not task:
-        raise HTTPException(status_code=404, detail="Task not found")
-    
-    db.delete(task)
-    db.commit()
-    return {"message": "Task deleted successfully"}
-
+# 特定パスのエンドポイントを{task_id}より前に配置
 @router.get("/matrix", response_model=dict)
 async def get_matrix_data(db: Session = Depends(get_db)):
     """マトリックス表示データ取得"""
-    tasks = db.query(Task).filter(Task.status != TaskStatus.COMPLETED).all()
-    
-    matrix = {
-        "high_high": [],
-        "high_medium": [],
-        "high_low": [],
-        "medium_high": [],
-        "medium_medium": [],
-        "medium_low": [],
-        "low_high": [],
-        "low_medium": [],
-        "low_low": []
-    }
-    
-    for task in tasks:
-        key = f"{task.priority.value}_{task.urgency.value}"
-        matrix[key].append(MatrixTask.from_orm(task))
-    
-    # 象限別の集計
-    quadrant_counts = {
-        "quadrant_1": len(matrix["high_high"]),
-        "quadrant_2": len(matrix["high_low"]),
-        "quadrant_3": len(matrix["low_high"]),
-        "quadrant_4": len(matrix["low_low"])
-    }
-    
-    return {
-        "matrix": matrix,
-        "summary": {
-            "total_tasks": len(tasks),
-            "by_quadrant": quadrant_counts
+    try:
+        # 全タスクを取得（完了以外）
+        tasks = db.query(Task).filter(Task.status != TaskStatus.COMPLETED).all()
+        print(f"Found {len(tasks)} tasks for matrix")
+        
+        matrix = {
+            "high_high": [],
+            "high_medium": [],
+            "high_low": [],
+            "medium_high": [],
+            "medium_medium": [],
+            "medium_low": [],
+            "low_high": [],
+            "low_medium": [],
+            "low_low": []
         }
-    }
+        
+        for task in tasks:
+            key = f"{task.priority.value}_{task.urgency.value}"
+            print(f"Task: {task.title}, Key: {key}")
+            
+            task_data = {
+                "id": task.id,
+                "title": task.title,
+                "priority": task.priority.value,
+                "urgency": task.urgency.value,
+                "status": task.status.value,
+                "progress": task.progress
+            }
+            
+            if key in matrix:
+                matrix[key].append(task_data)
+            else:
+                print(f"Unknown key: {key}")
+        
+        # 象限別の集計（実際のデータ分布に合わせて計算）
+        quadrant_counts = {
+            "quadrant_1": len(matrix["high_high"]),
+            "quadrant_2": len(matrix["high_low"]),
+            "quadrant_3": len(matrix["low_high"]),
+            "quadrant_4": len(matrix["medium_low"]) + len(matrix["low_medium"]) + len(matrix["low_low"])
+        }
+        
+        result = {
+            "matrix": matrix,
+            "summary": {
+                "total_tasks": len(tasks),
+                "by_quadrant": quadrant_counts
+            }
+        }
+        
+        print(f"Matrix result: {result}")
+        return result
+        
+    except Exception as e:
+        print(f"Matrix API error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/calendar", response_model=dict)
 async def get_calendar_data(
@@ -222,3 +213,38 @@ async def get_calendar_data(
             "milestones": milestone_count
         }
     }
+
+# 動的パスは最後に配置
+@router.get("/{task_id}", response_model=TaskDetail)
+async def get_task(task_id: str, db: Session = Depends(get_db)):
+    """タスク詳細取得"""
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
+
+@router.put("/{task_id}", response_model=TaskSchema)
+async def update_task(task_id: str, task_update: TaskUpdate, db: Session = Depends(get_db)):
+    """タスク更新"""
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    update_data = task_update.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(task, field, value)
+    
+    db.commit()
+    db.refresh(task)
+    return task
+
+@router.delete("/{task_id}")
+async def delete_task(task_id: str, db: Session = Depends(get_db)):
+    """タスク削除"""
+    task = db.query(Task).filter(Task.id == task_id).first()
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    
+    db.delete(task)
+    db.commit()
+    return {"message": "Task deleted successfully"}

@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
-from uuid import UUID
+
 from app.models.task import TaskCategory, TaskPriority, TaskUrgency, TaskStatus
 
 # ベーススキーマ
@@ -41,7 +41,7 @@ class TaskUpdate(BaseModel):
 
 # レスポンス用（基本）
 class Task(TaskBase):
-    id: UUID
+    id: str
     status: TaskStatus
     progress: int
     actual_start_date: Optional[datetime] = None
@@ -55,7 +55,7 @@ class Task(TaskBase):
 
 # サブタスク・コメント用の簡易スキーマ
 class SubTaskSimple(BaseModel):
-    id: UUID
+    id: str
     title: str
     completed: bool
     order_index: int
@@ -65,7 +65,7 @@ class SubTaskSimple(BaseModel):
         from_attributes = True
 
 class CommentSimple(BaseModel):
-    id: UUID
+    id: str
     content: str
     created_at: datetime
 
@@ -85,7 +85,7 @@ class TaskWithCounts(Task):
 
 # マトリックス表示用
 class MatrixTask(BaseModel):
-    id: UUID
+    id: str
     title: str
     priority: TaskPriority
     urgency: TaskUrgency
@@ -97,7 +97,7 @@ class MatrixTask(BaseModel):
 
 # カレンダー表示用
 class CalendarEvent(BaseModel):
-    id: UUID
+    id: str
     title: str
     type: str  # "start", "due", "milestone"
     priority: TaskPriority

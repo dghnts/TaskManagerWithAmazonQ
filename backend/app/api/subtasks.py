@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
-from uuid import UUID
+
 
 from app.database.connection import get_db
 from app.models.task import Task
@@ -11,7 +11,7 @@ from app.schemas.subtask import SubTask as SubTaskSchema, SubTaskCreate, SubTask
 router = APIRouter(tags=["subtasks"])
 
 @router.get("/tasks/{task_id}/subtasks", response_model=List[SubTaskSchema])
-async def get_subtasks(task_id: UUID, db: Session = Depends(get_db)):
+async def get_subtasks(task_id: str, db: Session = Depends(get_db)):
     """特定タスクのサブタスク一覧取得"""
     # タスクの存在確認
     task = db.query(Task).filter(Task.id == task_id).first()
@@ -22,7 +22,7 @@ async def get_subtasks(task_id: UUID, db: Session = Depends(get_db)):
     return subtasks
 
 @router.post("/tasks/{task_id}/subtasks", response_model=SubTaskSchema)
-async def create_subtask(task_id: UUID, subtask: SubTaskCreate, db: Session = Depends(get_db)):
+async def create_subtask(task_id: str, subtask: SubTaskCreate, db: Session = Depends(get_db)):
     """サブタスク作成"""
     # タスクの存在確認
     task = db.query(Task).filter(Task.id == task_id).first()
@@ -36,7 +36,7 @@ async def create_subtask(task_id: UUID, subtask: SubTaskCreate, db: Session = De
     return db_subtask
 
 @router.put("/subtasks/{subtask_id}", response_model=SubTaskSchema)
-async def update_subtask(subtask_id: UUID, subtask_update: SubTaskUpdate, db: Session = Depends(get_db)):
+async def update_subtask(subtask_id: str, subtask_update: SubTaskUpdate, db: Session = Depends(get_db)):
     """サブタスク更新"""
     subtask = db.query(SubTask).filter(SubTask.id == subtask_id).first()
     if not subtask:
@@ -51,7 +51,7 @@ async def update_subtask(subtask_id: UUID, subtask_update: SubTaskUpdate, db: Se
     return subtask
 
 @router.delete("/subtasks/{subtask_id}")
-async def delete_subtask(subtask_id: UUID, db: Session = Depends(get_db)):
+async def delete_subtask(subtask_id: str, db: Session = Depends(get_db)):
     """サブタスク削除"""
     subtask = db.query(SubTask).filter(SubTask.id == subtask_id).first()
     if not subtask:

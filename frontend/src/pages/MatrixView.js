@@ -58,54 +58,66 @@ function MatrixView() {
       {/* サマリー情報 */}
       {matrixData?.summary && (
         <Grid container spacing={2} mb={3}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={6} sm={3} md={2.4}>
             <Card>
-              <CardContent>
+              <CardContent sx={{ textAlign: 'center', py: 1.5 }}>
                 <Typography variant="h6" color="primary">
                   {matrixData.summary.total_tasks}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="caption" color="text.secondary">
                   総タスク数
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={6} sm={3} md={2.4}>
             <Card>
-              <CardContent>
+              <CardContent sx={{ textAlign: 'center', py: 1.5 }}>
                 <Typography variant="h6" color="error">
                   {matrixData.summary.by_quadrant?.quadrant_1 || 0}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  第1象限（重要・緊急）
+                <Typography variant="caption" color="text.secondary">
+                  第1象限
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={6} sm={3} md={2.4}>
             <Card>
-              <CardContent>
+              <CardContent sx={{ textAlign: 'center', py: 1.5 }}>
                 <Typography variant="h6" color="warning">
                   {matrixData.summary.by_quadrant?.quadrant_2 || 0}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  第2象限（重要・非緊急）
+                <Typography variant="caption" color="text.secondary">
+                  第2象限
                 </Typography>
               </CardContent>
             </Card>
           </Grid>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={6} sm={3} md={2.4}>
             <Card>
-              <CardContent>
-                <Typography variant="h6" color="info">
-                  {(matrixData.summary.by_quadrant?.quadrant_3 || 0) + 
-                   (matrixData.summary.by_quadrant?.quadrant_4 || 0)}
+              <CardContent sx={{ textAlign: 'center', py: 1.5 }}>
+                <Typography variant="h6" color="success">
+                  {matrixData.summary.by_quadrant?.quadrant_3 || 0}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  第3・4象限
+                <Typography variant="caption" color="text.secondary">
+                  第3象限
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          
+          <Grid item xs={6} sm={3} md={2.4}>
+            <Card>
+              <CardContent sx={{ textAlign: 'center', py: 1.5 }}>
+                <Typography variant="h6" color="info">
+                  {matrixData.summary.by_quadrant?.quadrant_4 || 0}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  第4象限
                 </Typography>
               </CardContent>
             </Card>

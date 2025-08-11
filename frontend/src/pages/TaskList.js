@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Typography, Box, Button, TextField, MenuItem, 
   FormControl, InputLabel, Select, Pagination,
-  Alert, CircularProgress
+  Alert, CircularProgress, InputAdornment, IconButton
 } from '@mui/material';
-import { Add } from '@mui/icons-material';
+import { Add, Search } from '@mui/icons-material';
 import { taskAPI } from '../services/api';
 import TaskCard from '../components/TaskCard';
 
@@ -19,6 +19,7 @@ function TaskList() {
     status: '',
     search: ''
   });
+  const [searchInput, setSearchInput] = useState('');
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -26,7 +27,7 @@ function TaskList() {
     total_pages: 0
   });
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -50,15 +51,26 @@ function TaskList() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, filters]);
 
   useEffect(() => {
     fetchTasks();
-  }, [pagination.page, filters]);
+  }, [fetchTasks]);
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({ ...prev, [field]: value }));
     setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const handleSearchSubmit = () => {
+    setFilters(prev => ({ ...prev, search: searchInput }));
+    setPagination(prev => ({ ...prev, page: 1 }));
+  };
+
+  const handleSearchKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleSearchSubmit();
+    }
   };
 
   const handlePageChange = (event, page) => {
@@ -115,10 +127,25 @@ function TaskList() {
       <Box display="flex" gap={2} mb={3} flexWrap="wrap">
         <TextField
           label="検索"
-          value={filters.search}
-          onChange={(e) => handleFilterChange('search', e.target.value)}
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          onKeyPress={handleSearchKeyPress}
           size="small"
           sx={{ minWidth: 200 }}
+          placeholder="タスク名で検索..."
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  onClick={handleSearchSubmit}
+                  size="small"
+                  edge="end"
+                >
+                  <Search />
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
         />
         
         <FormControl size="small" sx={{ minWidth: 120 }}>
